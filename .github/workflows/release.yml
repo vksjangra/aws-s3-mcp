@@ -30,7 +30,7 @@ jobs:
     needs: test # Only run this job if the test job succeeds
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       id-token: write # Needed for provenance data
 
     steps:
