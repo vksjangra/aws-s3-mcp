@@ -1,0 +1,85 @@
+name: Release Package
+
+on:
+  push:
+    tags:
+      - "v*" # Run when tag matches v*, e.g. v1.0.0
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Tests
+        run: npm test
+
+  publish:
+    name: Build & Publish
+    needs: test # Only run this job if the test job succeeds
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Needed for provenance data
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          registry-url: "https://registry.npmjs.org"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Package
+        run: npm run build
+
+      - name: Extract Version from Tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+
+      - name: Update package.json Version
+        run: npm version ${{ env.VERSION }} --no-git-tag-version
+
+      - name: Publish to NPM
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/**/*
+          body: |
+            ## aws-s3-mcp v${{ env.VERSION }}
+
+            **Release Date:** $(date +'%Y-%m-%d')
+
+            ### Changes in this release
+            - See the [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+
+            ### Installation
+            ```
+            npm install aws-s3-mcp
+            ```
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
