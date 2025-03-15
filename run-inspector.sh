@@ -22,7 +22,7 @@ echo "This will open in your browser. If it doesn't, check the terminal output f
 echo "Test the S3 tools against samuraikun-dev-blog bucket as described in INSPECTOR_GUIDE.md"
 echo ""
 
-npx @modelcontextprotocol/inspector node ./dist/index.js
+npx @modelcontextprotocol/inspector npx aws-s3-mcp
 
 # Exit gracefully
 exit 0

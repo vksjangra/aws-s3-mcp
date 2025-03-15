@@ -169,19 +169,6 @@ server.tool(
 
 // Start the server
 async function main() {
-  console.log('Starting S3 MCP Server...');
-  console.log('Use Ctrl+C to stop the server\n');
-
-  // Log configuration
-  const region = process.env.AWS_REGION || 'us-east-1';
-  const buckets = process.env.S3_BUCKETS ? process.env.S3_BUCKETS.split(',') : ['all buckets'];
-  const maxBuckets = process.env.S3_MAX_BUCKETS || '10';
-
-  console.log(`AWS Region: ${region}`);
-  console.log(`S3 Buckets: ${buckets.join(', ')}`);
-  console.log(`Max Buckets: ${maxBuckets}`);
-  console.log('\nWaiting for MCP client connection...');
-
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }
