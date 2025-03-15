@@ -22,21 +22,24 @@ The server is built using TypeScript and the MCP SDK, providing a secure and sta
 
 ### Setup
 
-1. Clone the repository or install via npm:
+1. Install via npm:
 
 ```bash
-# Clone option
-git clone [repository-url]
-cd s3-mcp-typescript
+# Install globally via npm
+npm install -g aws-s3-mcp
 
-# Or install globally via npm
-npm install -g s3-mcp-typescript
+# Or as a dependency in your project
+npm install aws-s3-mcp
 ```
 
-2. Install dependencies and build:
+2. If building from source:
 
 ```bash
-# If cloned from repository
+# Clone the repository
+git clone https://github.com/samuraikun/aws-s3-mcp.git
+cd aws-s3-mcp
+
+# Install dependencies and build
 npm install
 npm run build
 ```
@@ -97,8 +100,8 @@ To use this server with Claude Desktop:
 {
   "mcpServers": {
     "s3": {
-      "command": "node",
-      "args": ["/path/to/s3-mcp-typescript/dist/index.js"],
+      "command": "npx",
+      "args": ["aws-s3-mcp"],
       "env": {
         "AWS_REGION": "us-east-1",
         "S3_BUCKETS": "bucket1,bucket2,bucket3",

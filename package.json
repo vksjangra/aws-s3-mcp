@@ -1,5 +1,5 @@
 {
-  "name": "s3-mcp-server",
+  "name": "aws-s3-mcp",
   "version": "0.1.0",
   "description": "MCP Server for S3",
   "main": "dist/index.js",
