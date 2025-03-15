@@ -75,8 +75,12 @@ The server can be configured using the following environment variables:
 You can run the server with Node.js:
 
 ```bash
+# Using npx (without installing)
+npx aws-s3-mcp
+
 # If installed globally
-s3-mcp-server
+npm install -g aws-s3-mcp
+aws-s3-mcp
 
 # If running from cloned repository
 npm start
@@ -105,14 +109,20 @@ To use this server with Claude Desktop:
       "env": {
         "AWS_REGION": "us-east-1",
         "S3_BUCKETS": "bucket1,bucket2,bucket3",
-        "S3_MAX_BUCKETS": "5"
+        "S3_MAX_BUCKETS": "5",
+        "AWS_ACCESS_KEY_ID": "your-access-key",
+        "AWS_SECRET_ACCESS_KEY": "your-secret-key"
       }
     }
   }
 }
 ```
 
-3. Restart Claude Desktop
+> **Important**: Please note the following when using the configuration above
+>
+> - Replace `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` with your actual credentials
+> - `S3_BUCKETS` should contain a comma-separated list of buckets you want to allow access to
+> - `AWS_REGION` should be set to the region where your buckets are located
 
 ## Available Tools
 

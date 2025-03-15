@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "MCP Server for S3",
   "main": "dist/index.js",
+  "bin": {
+    "aws-s3-mcp": "./dist/index.js"
+  },
   "files": [
     "dist",
     "README.md",
