@@ -63,3 +63,10 @@ scripts/
 .npmrc
 .travis.yml
 .circleci/
+
+
+docker-compose.yml
+vitest.config.ts
+tsconfig.json
+run-inspector.sh
+test/

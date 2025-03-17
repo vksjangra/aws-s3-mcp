@@ -124,6 +124,35 @@ To use this server with Claude Desktop:
 > - `S3_BUCKETS` should contain a comma-separated list of buckets you want to allow access to
 > - `AWS_REGION` should be set to the region where your buckets are located
 
+### 💣 If error occurs on Claude Desktop
+
+If you encounter errors with the above configuration in Claude Desktop, try using absolute paths as follows:
+
+```bash
+# Get the path of node and aws-s3-mcp
+which node
+which aws-s3-mcp
+```
+
+```json
+{
+  "globalShortcut": "",
+  "mcpServers": {
+    "s3": {
+      "command": "your-absolute-path-to-node",
+      "args": ["your-absolute-path-to-aws-s3-mcp/dist/index.js"],
+      "env": {
+        "AWS_REGION": "your-aws-region",
+        "S3_BUCKETS": "your-s3-buckets",
+        "S3_MAX_BUCKETS": "your-max-buckets",
+        "AWS_ACCESS_KEY_ID": "your-access-key",
+        "AWS_SECRET_ACCESS_KEY": "your-secret-key"
+      }
+    }
+  }
+}
+```
+
 ## Available Tools
 
 ### list-buckets
