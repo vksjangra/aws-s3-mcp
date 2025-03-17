@@ -2,6 +2,8 @@
 
 An Amazon S3 Model Context Protocol (MCP) server that provides tools for interacting with S3 buckets and objects.
 
+https://github.com/user-attachments/assets/d05ff0f1-e2bf-43b9-8d0c-82605abfb666
+
 ## Overview
 
 This MCP server allows Large Language Models (LLMs) like Claude to interact with AWS S3 storage. It provides tools for:
