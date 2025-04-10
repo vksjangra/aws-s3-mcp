@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { S3Resource } from "./resources/s3Resource.js";
+import { S3Resource } from "./resources/s3.js";
 import { z } from "zod";
 import dotenv from "dotenv";
 

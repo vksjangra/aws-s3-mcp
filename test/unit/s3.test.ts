@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { S3Resource } from '../../src/resources/s3Resource';
+import { S3Resource } from '../../src/resources/s3';
 import { createMockBuckets, createMockObjects } from '../mocks/s3Client.mock';
 import { Readable } from 'stream';
 
