@@ -1,12 +1,12 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    environment: 'node',
-    include: ['test/**/*.test.ts'],
+    environment: "node",
+    include: ["test/**/*.test.ts"],
     coverage: {
-      reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/']
+      reporter: ["text", "json", "html"],
+      exclude: ["node_modules/"],
     },
     // environmentOptions: {
     //   // MinIO
@@ -20,5 +20,5 @@ export default defineConfig({
     //   },
     // },
     // setupFiles: ['./test/setup.ts'],
-  }
+  },
 });

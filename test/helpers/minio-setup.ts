@@ -1,13 +1,20 @@
-import { S3Client, CreateBucketCommand, PutObjectCommand, ListObjectsV2Command, DeleteObjectCommand, DeleteBucketCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  CreateBucketCommand,
+  PutObjectCommand,
+  ListObjectsV2Command,
+  DeleteObjectCommand,
+  DeleteBucketCommand,
+} from "@aws-sdk/client-s3";
 
 // Configure client for MinIO connection
 export function getMinioClient() {
   return new S3Client({
-    endpoint: process.env.AWS_ENDPOINT || 'http://localhost:9000',
-    region: process.env.AWS_REGION || 'us-east-1',
+    endpoint: process.env.AWS_ENDPOINT || "http://localhost:9000",
+    region: process.env.AWS_REGION || "us-east-1",
     credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'minioadmin',
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'minioadmin',
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID || "minioadmin",
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "minioadmin",
     },
     forcePathStyle: true,
   });
@@ -23,7 +30,7 @@ export async function setupTestBucket(bucketName: string) {
     console.log(`Created test bucket: ${bucketName}`);
   } catch (error: any) {
     // Ignore if bucket already exists
-    if (error.name !== 'BucketAlreadyExists' && error.name !== 'BucketAlreadyOwnedByYou') {
+    if (error.name !== "BucketAlreadyExists" && error.name !== "BucketAlreadyOwnedByYou") {
       console.error(`Failed to create bucket: ${bucketName}`, error);
       throw error;
     }
@@ -36,12 +43,14 @@ export async function setupTestBucket(bucketName: string) {
 export async function uploadTestFile(bucketName: string, key: string, content: string) {
   const client = getMinioClient();
 
-  await client.send(new PutObjectCommand({
-    Bucket: bucketName,
-    Key: key,
-    Body: content,
-    ContentType: key.endsWith('.json') ? 'application/json' : 'text/plain',
-  }));
+  await client.send(
+    new PutObjectCommand({
+      Bucket: bucketName,
+      Key: key,
+      Body: content,
+      ContentType: key.endsWith(".json") ? "application/json" : "text/plain",
+    }),
+  );
 
   console.log(`Uploaded test file: ${key} to bucket: ${bucketName}`);
 }
@@ -94,48 +103,58 @@ trailer
 >>
 %%EOF`;
 
-  await client.send(new PutObjectCommand({
-    Bucket: bucketName,
-    Key: key,
-    Body: pdfContent,
-    ContentType: 'application/pdf',
-  }));
+  await client.send(
+    new PutObjectCommand({
+      Bucket: bucketName,
+      Key: key,
+      Body: pdfContent,
+      ContentType: "application/pdf",
+    }),
+  );
 
   console.log(`Uploaded test PDF: ${key} to bucket: ${bucketName}`);
 }
 
 // Upload multiple test files
 export async function setupTestFiles(bucketName: string) {
-  await uploadTestFile(bucketName, 'test-file.txt', 'This is a test file content');
-  await uploadTestFile(bucketName, 'test-file.json', JSON.stringify({ test: 'data', value: 123 }));
-  await uploadTestPdf(bucketName, 'test-file.pdf');
+  await uploadTestFile(bucketName, "test-file.txt", "This is a test file content");
+  await uploadTestFile(bucketName, "test-file.json", JSON.stringify({ test: "data", value: 123 }));
+  await uploadTestPdf(bucketName, "test-file.pdf");
 }
 
 // Clean up bucket after tests
 export async function cleanupTestBucket(bucketName: string) {
   // Safety check to prevent accidental deletion of production buckets
-  if (!bucketName.startsWith('test-') && !bucketName.includes('test')) {
-    throw new Error(`Refusing to delete bucket "${bucketName}" as it doesn't appear to be a test bucket`);
+  if (!bucketName.startsWith("test-") && !bucketName.includes("test")) {
+    throw new Error(
+      `Refusing to delete bucket "${bucketName}" as it doesn't appear to be a test bucket`,
+    );
   }
 
   const client = getMinioClient();
 
   try {
     // List all objects in the bucket
-    const listObjectsResponse = await client.send(new ListObjectsV2Command({
-      Bucket: bucketName,
-    }));
+    const listObjectsResponse = await client.send(
+      new ListObjectsV2Command({
+        Bucket: bucketName,
+      }),
+    );
 
     // Delete each object in the bucket
     if (listObjectsResponse.Contents && listObjectsResponse.Contents.length > 0) {
-      console.log(`Deleting ${listObjectsResponse.Contents.length} objects from bucket: ${bucketName}`);
+      console.log(
+        `Deleting ${listObjectsResponse.Contents.length} objects from bucket: ${bucketName}`,
+      );
 
       for (const object of listObjectsResponse.Contents) {
         if (object.Key) {
-          await client.send(new DeleteObjectCommand({
-            Bucket: bucketName,
-            Key: object.Key,
-          }));
+          await client.send(
+            new DeleteObjectCommand({
+              Bucket: bucketName,
+              Key: object.Key,
+            }),
+          );
           console.log(`Deleted object: ${object.Key}`);
         }
       }

@@ -1,15 +1,23 @@
-import { S3Client, S3ClientConfig, ListBucketsCommand, ListObjectsV2Command, GetObjectCommand, Bucket, _Object } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  S3ClientConfig,
+  ListBucketsCommand,
+  ListObjectsV2Command,
+  GetObjectCommand,
+  Bucket,
+  _Object,
+} from "@aws-sdk/client-s3";
 import { Readable } from "stream";
 import pdfParse from "pdf-parse";
 import { S3ObjectData } from "../types";
-import { match, P } from 'ts-pattern';
+import { match, P } from "ts-pattern";
 
 export class S3Resource {
   private client: S3Client;
   private maxBuckets: number;
   private configuredBuckets: string[];
 
-  constructor(region: string = 'us-east-1', maxBuckets?: number) {
+  constructor(region: string = "us-east-1", maxBuckets?: number) {
     // S3 client configuration options
     const clientOptions: S3ClientConfig = {
       region: process.env.AWS_REGION || region,
@@ -29,7 +37,7 @@ export class S3Resource {
     }
 
     // Path style URL setting (required for MinIO)
-    if (process.env.AWS_S3_FORCE_PATH_STYLE === 'true') {
+    if (process.env.AWS_S3_FORCE_PATH_STYLE === "true") {
       clientOptions.forcePathStyle = true;
     }
 
@@ -48,13 +56,13 @@ export class S3Resource {
 
   private getConfiguredBuckets(): string[] {
     // Get bucket information from environment variables
-    const bucketsEnv = process.env.S3_BUCKETS || '';
-    return bucketsEnv.split(',').filter(bucket => bucket.trim() !== '');
+    const bucketsEnv = process.env.S3_BUCKETS || "";
+    return bucketsEnv.split(",").filter((bucket) => bucket.trim() !== "");
   }
 
   private logError(message: string, error: unknown): void {
     // Skip logging in test environments or when NODE_ENV is test
-    if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
+    if (process.env.NODE_ENV === "test" || process.env.VITEST) {
       return;
     }
     console.error(message, error);
@@ -72,8 +80,8 @@ export class S3Resource {
       return match({ buckets, hasConfiguredBuckets: this.configuredBuckets.length > 0 })
         .with({ hasConfiguredBuckets: true }, ({ buckets }) =>
           buckets
-            .filter(bucket => bucket.Name && this.configuredBuckets.includes(bucket.Name))
-            .slice(0, this.maxBuckets)
+            .filter((bucket) => bucket.Name && this.configuredBuckets.includes(bucket.Name))
+            .slice(0, this.maxBuckets),
         )
         .otherwise(({ buckets }) => buckets.slice(0, this.maxBuckets));
     } catch (error) {
@@ -83,12 +91,16 @@ export class S3Resource {
   }
 
   // List objects in a bucket
-  async listObjects(bucketName: string, prefix: string = "", maxKeys: number = 1000): Promise<_Object[]> {
+  async listObjects(
+    bucketName: string,
+    prefix: string = "",
+    maxKeys: number = 1000,
+  ): Promise<_Object[]> {
     try {
       // Use pattern matching to check bucket accessibility
       await match({
         hasConfiguredBuckets: this.configuredBuckets.length > 0,
-        isAllowed: this.configuredBuckets.includes(bucketName)
+        isAllowed: this.configuredBuckets.includes(bucketName),
       })
         .with({ hasConfiguredBuckets: true, isAllowed: false }, () => {
           throw new Error(`Bucket ${bucketName} is not in the allowed buckets list`);
@@ -98,7 +110,7 @@ export class S3Resource {
       const command = new ListObjectsV2Command({
         Bucket: bucketName,
         Prefix: prefix,
-        MaxKeys: maxKeys
+        MaxKeys: maxKeys,
       });
 
       const response = await this.client.send(command);
@@ -115,7 +127,7 @@ export class S3Resource {
       // Use pattern matching to check bucket accessibility
       await match({
         hasConfiguredBuckets: this.configuredBuckets.length > 0,
-        isAllowed: this.configuredBuckets.includes(bucketName)
+        isAllowed: this.configuredBuckets.includes(bucketName),
       })
         .with({ hasConfiguredBuckets: true, isAllowed: false }, () => {
           throw new Error(`Bucket ${bucketName} is not in the allowed buckets list`);
@@ -124,15 +136,15 @@ export class S3Resource {
 
       const command = new GetObjectCommand({
         Bucket: bucketName,
-        Key: key
+        Key: key,
       });
 
       const response = await this.client.send(command);
-      const contentType = response.ContentType || 'application/octet-stream';
+      const contentType = response.ContentType || "application/octet-stream";
 
       // Check if response body is a readable stream
       if (!(response.Body instanceof Readable)) {
-        throw new Error('Unexpected response body type');
+        throw new Error("Unexpected response body type");
       }
 
       // Handle the response body as a stream
@@ -145,19 +157,19 @@ export class S3Resource {
       // Use pattern matching to determine file type and return appropriate data
       return match({
         isText: this.isTextFile(key, contentType),
-        isPdf: this.isPdfFile(key, contentType)
+        isPdf: this.isPdfFile(key, contentType),
       })
         .with({ isText: true }, async () => ({
-          data: data.toString('utf-8'),
-          contentType
+          data: data.toString("utf-8"),
+          contentType,
         }))
         .with({ isPdf: true }, async () => ({
           data: await this.convertPdfToText(data),
-          contentType
+          contentType,
         }))
         .otherwise(() => ({
           data,
-          contentType
+          contentType,
         }));
     } catch (error) {
       this.logError(`Error getting object ${key} from bucket ${bucketName}:`, error);
@@ -168,31 +180,60 @@ export class S3Resource {
   // Check if a file is a text file based on extension and content type
   isTextFile(key: string, contentType?: string): boolean {
     // Use pattern matching to determine if file is text
-    return match({ key: key.toLowerCase(), contentType: contentType || '' })
-      .with({
-        contentType: P.when(type =>
-          type.startsWith('text/') ||
-          type === 'application/json' ||
-          type === 'application/xml' ||
-          type === 'application/javascript'
-        )
-      }, () => true)
-      .with({
-        key: P.when(k => [
-          '.txt', '.json', '.xml', '.html', '.htm', '.css', '.js', '.ts',
-          '.md', '.csv', '.yml', '.yaml', '.log', '.sh', '.bash', '.py',
-          '.rb', '.java', '.c', '.cpp', '.h', '.cs', '.php'
-        ].some(ext => k.endsWith(ext)))
-      }, () => true)
+    return match({ key: key.toLowerCase(), contentType: contentType || "" })
+      .with(
+        {
+          contentType: P.when(
+            (type) =>
+              type.startsWith("text/") ||
+              type === "application/json" ||
+              type === "application/xml" ||
+              type === "application/javascript",
+          ),
+        },
+        () => true,
+      )
+      .with(
+        {
+          key: P.when((k) =>
+            [
+              ".txt",
+              ".json",
+              ".xml",
+              ".html",
+              ".htm",
+              ".css",
+              ".js",
+              ".ts",
+              ".md",
+              ".csv",
+              ".yml",
+              ".yaml",
+              ".log",
+              ".sh",
+              ".bash",
+              ".py",
+              ".rb",
+              ".java",
+              ".c",
+              ".cpp",
+              ".h",
+              ".cs",
+              ".php",
+            ].some((ext) => k.endsWith(ext)),
+          ),
+        },
+        () => true,
+      )
       .otherwise(() => false);
   }
 
   // Check if a file is a PDF file
   isPdfFile(key: string, contentType?: string): boolean {
     // Use pattern matching to determine if file is PDF
-    return match({ key: key.toLowerCase(), contentType: contentType || '' })
-      .with({ contentType: 'application/pdf' }, () => true)
-      .with({ key: P.when(k => k.endsWith('.pdf')) }, () => true)
+    return match({ key: key.toLowerCase(), contentType: contentType || "" })
+      .with({ contentType: "application/pdf" }, () => true)
+      .with({ key: P.when((k) => k.endsWith(".pdf")) }, () => true)
       .otherwise(() => false);
   }
 

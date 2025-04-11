@@ -45,11 +45,7 @@ export class ListObjectsTool implements IMCPTool {
     const { bucket, prefix, maxKeys } = args;
 
     try {
-      const objects = await this.s3Resource.listObjects(
-        bucket,
-        prefix || "",
-        maxKeys || 1000
-      );
+      const objects = await this.s3Resource.listObjects(bucket, prefix || "", maxKeys || 1000);
       return {
         content: [
           {

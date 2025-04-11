@@ -8,13 +8,12 @@
 export function createErrorResponse(
   error: unknown,
   message?: string,
-  options?: { suppressLogging?: boolean }
+  options?: { suppressLogging?: boolean },
 ): {
   content: { type: "text"; text: string }[];
   isError: boolean;
 } {
-  const errorMessage = message ||
-    (error instanceof Error ? error.message : String(error));
+  const errorMessage = message || (error instanceof Error ? error.message : String(error));
 
   // Only log errors if not suppressed (useful for testing to avoid noise)
   if (!options?.suppressLogging) {
