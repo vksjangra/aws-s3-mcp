@@ -91,6 +91,14 @@ npm start
 node dist/index.js
 ```
 
+## Debugging on MCP Inspector
+
+To debug the server using MCP Inspector, you can run `sh run-inspector.sh`
+
+```bash
+sh run-inspector.sh
+```
+
 ## Connecting to Claude Desktop
 
 To use this server with Claude Desktop:
@@ -193,13 +201,13 @@ Lists objects in a specified S3 bucket.
 ```json
 [
   {
-    "Key": "images/photo1.jpg",
+    "Key": "sample.pdf",
     "LastModified": "2023-10-10T08:12:15.000Z",
     "Size": 2048576,
     "StorageClass": "STANDARD"
   },
   {
-    "Key": "images/photo2.jpg",
+    "Key": "sample.md",
     "LastModified": "2023-10-12T15:30:45.000Z",
     "Size": 1536000,
     "StorageClass": "STANDARD"
@@ -241,7 +249,7 @@ Binary content (image/jpeg): base64 data is /9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgG
 When interacting with Claude in the desktop app, you can ask it to perform S3 operations like:
 
 - "List all my S3 buckets"
-- "Show me the contents of my images bucket"
+- "Summarize PDF files in my-documents-bucket"
 - "Get the README.txt file from my-documents-bucket"
 
 Claude will use the appropriate MCP tool to carry out the request and show you the results.
