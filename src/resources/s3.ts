@@ -52,6 +52,14 @@ export class S3Resource {
     return bucketsEnv.split(',').filter(bucket => bucket.trim() !== '');
   }
 
+  private logError(message: string, error: unknown): void {
+    // Skip logging in test environments or when NODE_ENV is test
+    if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
+      return;
+    }
+    console.error(message, error);
+  }
+
   // List all buckets or filtered buckets based on configuration
   async listBuckets(): Promise<Bucket[]> {
     try {
@@ -69,7 +77,7 @@ export class S3Resource {
         )
         .otherwise(({ buckets }) => buckets.slice(0, this.maxBuckets));
     } catch (error) {
-      console.error("Error listing buckets:", error);
+      this.logError("Error listing buckets:", error);
       throw error;
     }
   }
@@ -96,7 +104,7 @@ export class S3Resource {
       const response = await this.client.send(command);
       return response.Contents || [];
     } catch (error) {
-      console.error(`Error listing objects in bucket ${bucketName}:`, error);
+      this.logError(`Error listing objects in bucket ${bucketName}:`, error);
       throw error;
     }
   }
@@ -152,7 +160,7 @@ export class S3Resource {
           contentType
         }));
     } catch (error) {
-      console.error(`Error getting object ${key} from bucket ${bucketName}:`, error);
+      this.logError(`Error getting object ${key} from bucket ${bucketName}:`, error);
       throw error;
     }
   }
@@ -194,7 +202,7 @@ export class S3Resource {
       const data = await pdfParse(buffer);
       return data.text;
     } catch (error) {
-      console.error("Error converting PDF to text:", error);
+      this.logError("Error converting PDF to text:", error);
       return "Error: Could not extract text from PDF file.";
     }
   }
