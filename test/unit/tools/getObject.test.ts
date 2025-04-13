@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { S3Resource } from "../../../src/resources/s3";
 import { GetObjectTool } from "../../../src/tools/getObject";
-import { S3ObjectData } from "../../../src/types";
+import type { S3ObjectData } from "../../../src/types";
 
 // Mock the S3Resource
 vi.mock("../../../src/resources/s3", () => {

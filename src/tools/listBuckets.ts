@@ -1,6 +1,5 @@
-import { z } from "zod";
-import { S3Resource } from "../resources/s3.js";
 import { createErrorResponse } from "../helpers/createErrorResponse.js";
+import type { S3Resource } from "../resources/s3.js";
 import type { IMCPTool } from "../types.js";
 
 /**
@@ -38,7 +37,7 @@ export class ListBucketsTool implements IMCPTool {
    * Execute function
    * @param args Empty for this tool
    */
-  async execute(args: Record<string, never>) {
+  async execute(_args: Record<string, never>) {
     try {
       const buckets = await this.s3Resource.listBuckets();
       return {

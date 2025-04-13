@@ -1,10 +1,10 @@
 import {
-  S3Client,
   CreateBucketCommand,
-  PutObjectCommand,
-  ListObjectsV2Command,
-  DeleteObjectCommand,
   DeleteBucketCommand,
+  DeleteObjectCommand,
+  ListObjectsV2Command,
+  PutObjectCommand,
+  S3Client,
 } from "@aws-sdk/client-s3";
 
 // Configure client for MinIO connection

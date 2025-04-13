@@ -1,23 +1,21 @@
+import { Readable } from "node:stream";
+import type { Bucket, S3ClientConfig, _Object } from "@aws-sdk/client-s3";
 import {
-  S3Client,
-  S3ClientConfig,
+  GetObjectCommand,
   ListBucketsCommand,
   ListObjectsV2Command,
-  GetObjectCommand,
-  Bucket,
-  _Object,
+  S3Client,
 } from "@aws-sdk/client-s3";
-import { Readable } from "stream";
 import pdfParse from "pdf-parse";
-import { S3ObjectData } from "../types";
-import { match, P } from "ts-pattern";
+import { P, match } from "ts-pattern";
+import type { S3ObjectData } from "../types";
 
 export class S3Resource {
   private client: S3Client;
   private maxBuckets: number;
   private configuredBuckets: string[];
 
-  constructor(region: string = "us-east-1", maxBuckets?: number) {
+  constructor(region = "us-east-1", maxBuckets?: number) {
     // S3 client configuration options
     const clientOptions: S3ClientConfig = {
       region: process.env.AWS_REGION || region,
@@ -48,7 +46,7 @@ export class S3Resource {
       this.maxBuckets = maxBuckets;
     } else {
       const envMaxBuckets = process.env.S3_MAX_BUCKETS;
-      this.maxBuckets = envMaxBuckets ? parseInt(envMaxBuckets, 10) : 5;
+      this.maxBuckets = envMaxBuckets ? Number.parseInt(envMaxBuckets, 10) : 5;
     }
 
     this.configuredBuckets = this.getConfiguredBuckets();
@@ -74,7 +72,7 @@ export class S3Resource {
       const command = new ListBucketsCommand({});
       const response = await this.client.send(command);
 
-      let buckets = response.Buckets || [];
+      const buckets = response.Buckets || [];
 
       // Use pattern matching to filter buckets
       return match({ buckets, hasConfiguredBuckets: this.configuredBuckets.length > 0 })
@@ -91,11 +89,7 @@ export class S3Resource {
   }
 
   // List objects in a bucket
-  async listObjects(
-    bucketName: string,
-    prefix: string = "",
-    maxKeys: number = 1000,
-  ): Promise<_Object[]> {
+  async listObjects(bucketName: string, prefix = "", maxKeys = 1000): Promise<_Object[]> {
     try {
       // Use pattern matching to check bucket accessibility
       await match({

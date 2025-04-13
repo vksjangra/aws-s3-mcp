@@ -1,6 +1,5 @@
-import { beforeEach, afterEach, vi } from "vitest";
-import { S3Client } from "@aws-sdk/client-s3";
-import { Readable } from "stream";
+import { Readable } from "node:stream";
+import { beforeEach, vi } from "vitest";
 
 // Mock the S3Client class and its send method
 vi.mock("@aws-sdk/client-s3", async () => {

@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
-import * as childProcess from "child_process";
-import * as path from "path";
+import * as childProcess from "node:child_process";
+import * as path from "node:path";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createMockBuckets, mcpServerMock } from "../mocks/s3Client.mock";
 
 // Mock the child_process module

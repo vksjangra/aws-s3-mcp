@@ -1,5 +1,5 @@
-import { beforeAll, afterAll } from "vitest";
-import { setupTestBucket, cleanupTestBucket, setupTestFiles } from "./helpers/minio-setup";
+import { afterAll, beforeAll } from "vitest";
+import { cleanupTestBucket, setupTestBucket, setupTestFiles } from "./helpers/minio-setup";
 
 // Check if this is an integration test
 const isIntegrationTest =
@@ -40,9 +40,8 @@ beforeAll(async () => {
     console.error("Make sure MinIO is running (e.g., via Docker Compose)");
     if (isIntegrationTest) {
       throw error;
-    } else {
-      console.warn("Continuing with unit tests despite MinIO setup failure");
     }
+    console.warn("Continuing with unit tests despite MinIO setup failure");
   }
 });
 

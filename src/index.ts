@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import dotenv from "dotenv";
 import { S3Resource } from "./resources/s3.js";
 import { createTools } from "./tools/index.js";
-import dotenv from "dotenv";
 
 // Process command-line arguments
 const args = process.argv.slice(2);

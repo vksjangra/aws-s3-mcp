@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { S3Resource } from "../resources/s3.js";
 import { createErrorResponse } from "../helpers/createErrorResponse.js";
+import type { S3Resource } from "../resources/s3.js";
 import type { IMCPTool, InferZodParams } from "../types.js";
 
 /**
