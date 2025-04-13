@@ -1,0 +1,40 @@
+name: Biome
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: ["*"]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      # Using Biome CI Action
+      - name: Run Biome
+        uses: biomejs/setup-biome@v2
+        with:
+          version: latest
+
+      # Lint check with Biome
+      - name: Check Linting
+        run: biome ci .
+
+      # Format check with Biome
+      - name: Check Formatting
+        run: biome check --formatter-enabled=true .

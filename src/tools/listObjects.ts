@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { S3Resource } from "../resources/s3.js";
 import { createErrorResponse } from "../helpers/createErrorResponse.js";
+import type { S3Resource } from "../resources/s3.js";
 import type { IMCPTool, InferZodParams } from "../types.js";
 
 /**
@@ -45,11 +45,7 @@ export class ListObjectsTool implements IMCPTool {
     const { bucket, prefix, maxKeys } = args;
 
     try {
-      const objects = await this.s3Resource.listObjects(
-        bucket,
-        prefix || "",
-        maxKeys || 1000
-      );
+      const objects = await this.s3Resource.listObjects(bucket, prefix || "", maxKeys || 1000);
       return {
         content: [
           {

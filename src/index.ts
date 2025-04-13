@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import dotenv from "dotenv";
 import { S3Resource } from "./resources/s3.js";
 import { createTools } from "./tools/index.js";
-import dotenv from "dotenv";
 
 // Process command-line arguments
 const args = process.argv.slice(2);
-if (args.includes('--help') || args.includes('-h')) {
+if (args.includes("--help") || args.includes("-h")) {
   console.log(`
 aws-s3-mcp - S3 Model Context Protocol Server
 
@@ -30,8 +30,8 @@ For more information, visit: https://github.com/samuraikun/aws-s3-mcp
   process.exit(0);
 }
 
-if (args.includes('--version') || args.includes('-v')) {
-  console.log('aws-s3-mcp v0.1.0');
+if (args.includes("--version") || args.includes("-v")) {
+  console.log("aws-s3-mcp v0.1.0");
   process.exit(0);
 }
 
@@ -50,12 +50,7 @@ const s3Resource = new S3Resource();
 // Create and register all tools
 const tools = createTools(s3Resource);
 for (const tool of tools) {
-  server.tool(
-    tool.name,
-    tool.description,
-    tool.parameters,
-    tool.execute.bind(tool)
-  );
+  server.tool(tool.name, tool.description, tool.parameters, tool.execute.bind(tool));
 }
 
 // Start the server
