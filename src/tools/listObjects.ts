@@ -22,8 +22,14 @@ export class ListObjectsTool implements IMCPTool {
    */
   readonly parameters = {
     bucket: z.string().describe("Name of the S3 bucket"),
-    prefix: z.union([z.string(), z.null()]).optional().describe("Prefix to filter objects (like a folder)"),
-    maxKeys: z.union([z.number(), z.null()]).optional().describe("Maximum number of objects to return"),
+    prefix: z
+      .union([z.string(), z.null()])
+      .optional()
+      .describe("Prefix to filter objects (like a folder)"),
+    maxKeys: z
+      .union([z.number(), z.null()])
+      .optional()
+      .describe("Maximum number of objects to return"),
   } as const;
 
   /**
