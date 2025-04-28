@@ -22,5 +22,19 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      # Using Biome CI Action
+      - name: Run Biome
+        uses: biomejs/setup-biome@v2
+        with:
+          version: latest
+
+      # Lint check with Biome
+      - name: Check Linting
+        run: biome ci .
+
+      # Format check with Biome
+      - name: Check Formatting
+        run: biome check --formatter-enabled=true .
+
       - name: Run Tests
         run: npm test
