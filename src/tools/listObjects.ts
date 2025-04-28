@@ -22,8 +22,14 @@ export class ListObjectsTool implements IMCPTool {
    */
   readonly parameters = {
     bucket: z.string().describe("Name of the S3 bucket"),
-    prefix: z.string().optional().describe("Prefix to filter objects (like a folder)"),
-    maxKeys: z.number().optional().describe("Maximum number of objects to return"),
+    prefix: z
+      .union([z.string(), z.null()])
+      .optional()
+      .describe("Prefix to filter objects (like a folder)"),
+    maxKeys: z
+      .union([z.number(), z.null()])
+      .optional()
+      .describe("Maximum number of objects to return"),
   } as const;
 
   /**
@@ -45,7 +51,11 @@ export class ListObjectsTool implements IMCPTool {
     const { bucket, prefix, maxKeys } = args;
 
     try {
-      const objects = await this.s3Resource.listObjects(bucket, prefix || "", maxKeys || 1000);
+      // Handle both undefined and null values for optional parameters
+      const validPrefix = prefix === null || prefix === undefined ? "" : prefix;
+      const validMaxKeys = maxKeys === null || maxKeys === undefined ? 1000 : maxKeys;
+
+      const objects = await this.s3Resource.listObjects(bucket, validPrefix, validMaxKeys);
       return {
         content: [
           {
