@@ -1,5 +1,12 @@
 # S3 MCP Server
 
+[![CI](https://img.shields.io/github/actions/workflow/status/samuraikun/aws-s3-mcp/test.yml?branch=main&style=flat-square&logo=github&label=tests)](https://github.com/samuraikun/aws-s3-mcp/actions/workflows/test.yml)
+[![Trivy Scan](https://img.shields.io/github/actions/workflow/status/samuraikun/aws-s3-mcp/docker.yml?branch=main&label=trivy&style=flat-square&logo=aquasecurity)](https://github.com/samuraikun/aws-s3-mcp/actions/workflows/docker.yml)
+[![npm version](https://img.shields.io/npm/v/aws-s3-mcp?style=flat-square&logo=npm)](https://www.npmjs.com/package/aws-s3-mcp)
+[![npm downloads](https://img.shields.io/npm/dm/aws-s3-mcp?style=flat-square&logo=npm)](https://www.npmjs.com/package/aws-s3-mcp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/node/v/aws-s3-mcp?style=flat-square&logo=nodedotjs)](https://nodejs.org/)
+
 An Amazon S3 Model Context Protocol (MCP) server that provides tools for interacting with S3 buckets and objects.
 
 https://github.com/user-attachments/assets/d05ff0f1-e2bf-43b9-8d0c-82605abfb666
@@ -94,11 +101,11 @@ npm start
 node dist/index.js
 ```
 
-### Docker Setup
+### Docker Setup 🐳
 
 You can run the S3 MCP server as a Docker container using either Docker CLI or Docker Compose.
 
-#### Using Docker CLI (without Docker Compose)
+#### Using Docker CLI
 
 1. Build the Docker image:
 
@@ -110,7 +117,7 @@ docker build -t aws-s3-mcp .
 
 ```bash
 # Option 1: Pass environment variables directly
-docker run -d -p 3000:3000 \
+docker run -d \
   -e AWS_REGION=us-east-1 \
   -e S3_BUCKETS=bucket1,bucket2 \
   -e S3_MAX_BUCKETS=5 \
@@ -120,7 +127,7 @@ docker run -d -p 3000:3000 \
   aws-s3-mcp
 
 # Option 2: Use environment variables from .env file
-docker run -d -p 3000:3000 \
+docker run -d \
   --env-file .env \
   --name aws-s3-mcp-server \
   aws-s3-mcp
@@ -139,7 +146,7 @@ docker stop aws-s3-mcp-server
 docker rm aws-s3-mcp-server
 ```
 
-The server will be accessible at http://localhost:3000
+Note that the container doesn't expose any ports because it's designed to be used with Claude Desktop through Docker exec rather than direct HTTP connections.
 
 #### Using Docker Compose
 
@@ -158,8 +165,6 @@ docker compose logs -f s3-mcp
 ```bash
 docker compose down
 ```
-
-3. The server will be accessible at http://localhost:3000
 
 #### Using Docker with MinIO for Testing
 
@@ -225,35 +230,41 @@ To use this server with Claude Desktop:
 }
 ```
 
-### Docker Option for Claude Desktop
+### Docker Option for Claude Desktop 🐳
 
-You can also configure Claude Desktop to use the Dockerized version of the MCP server:
+You can also configure Claude Desktop to use a running Docker container for the MCP server:
 
 ```json
 {
   "mcpServers": {
     "s3": {
-      "url": "http://localhost:3000"
+      "command": "docker",
+      "args": ["exec", "-i", "aws-s3-mcp-server", "node", "dist/index.js"],
+      "env": {}
     }
   }
 }
 ```
 
-> **Important**: For the Docker option to work, you must start the Docker container separately before launching Claude Desktop using either Docker CLI or Docker Compose:
->
-> **With Docker CLI:**
+> **⚠️ Important Prerequisites**: For this Docker configuration to work, you **MUST** first build and run the Docker container **BEFORE** launching Claude Desktop:
 >
 > ```bash
-> docker run -d -p 3000:3000 --env-file .env --name aws-s3-mcp-server aws-s3-mcp
-> ```
+> # 1. First, build the Docker image (only needed once or after changes)
+> docker build -t aws-s3-mcp .
 >
-> **With Docker Compose:**
->
-> ```bash
+> # 2. Then start the container (required each time before using with Claude)
+> # Using Docker Compose (recommended)
 > docker compose up -d s3-mcp
+>
+> # Or using Docker CLI
+> docker run -d --name aws-s3-mcp-server --env-file .env aws-s3-mcp
 > ```
+>
+> Without a running container, Claude Desktop will show errors when trying to use S3 tools.
+>
+> The Docker configuration above uses `exec` to send MCP requests directly to the running container. No port mapping is required since Claude communicates directly with the container instead of through a network port.
 
-> **Note**: When using Docker, make sure the port mapping (3000:3000) matches the port specified in the Claude Desktop configuration.
+> **Note**: Ensure the container name in the configuration (`aws-s3-mcp-server`) matches the name of your running container.
 
 > **Important**: Please note the following when using the configuration above
 >
