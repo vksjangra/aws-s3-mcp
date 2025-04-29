@@ -21,6 +21,7 @@ The server is built using TypeScript and the MCP SDK, providing a secure and sta
 - Node.js 18 or higher
 - npm or yarn
 - AWS credentials configured (either through environment variables or AWS credentials file)
+- Docker (optional, for containerized setup)
 
 ### Setup
 
@@ -74,7 +75,9 @@ The server can be configured using the following environment variables:
 
 ## Running the Server
 
-You can run the server with Node.js:
+### Direct Node.js Execution
+
+You can run the server directly with Node.js:
 
 ```bash
 # Using npx (without installing)
@@ -91,13 +94,107 @@ npm start
 node dist/index.js
 ```
 
-## Debugging on MCP Inspector
+### Docker Setup
 
-To debug the server using MCP Inspector, you can run `sh run-inspector.sh`
+You can run the S3 MCP server as a Docker container using either Docker CLI or Docker Compose.
+
+#### Using Docker CLI (without Docker Compose)
+
+1. Build the Docker image:
 
 ```bash
-sh run-inspector.sh
+docker build -t aws-s3-mcp .
 ```
+
+2. Run the container with environment variables:
+
+```bash
+# Option 1: Pass environment variables directly
+docker run -d -p 3000:3000 \
+  -e AWS_REGION=us-east-1 \
+  -e S3_BUCKETS=bucket1,bucket2 \
+  -e S3_MAX_BUCKETS=5 \
+  -e AWS_ACCESS_KEY_ID=your-access-key \
+  -e AWS_SECRET_ACCESS_KEY=your-secret-key \
+  --name aws-s3-mcp-server \
+  aws-s3-mcp
+
+# Option 2: Use environment variables from .env file
+docker run -d -p 3000:3000 \
+  --env-file .env \
+  --name aws-s3-mcp-server \
+  aws-s3-mcp
+```
+
+3. Check container logs:
+
+```bash
+docker logs aws-s3-mcp-server
+```
+
+4. Stop and remove the container:
+
+```bash
+docker stop aws-s3-mcp-server
+docker rm aws-s3-mcp-server
+```
+
+The server will be accessible at http://localhost:3000
+
+#### Using Docker Compose
+
+1. Build and start the Docker container:
+
+```bash
+# Build and start the container
+docker compose up -d s3-mcp
+
+# View logs
+docker compose logs -f s3-mcp
+```
+
+2. To stop the container:
+
+```bash
+docker compose down
+```
+
+3. The server will be accessible at http://localhost:3000
+
+#### Using Docker with MinIO for Testing
+
+The Docker Compose setup includes a MinIO service for local testing:
+
+```bash
+# Start MinIO and the MCP server
+docker compose up -d
+
+# Access MinIO console at http://localhost:9001
+# Default credentials: minioadmin/minioadmin
+```
+
+The MinIO service automatically creates two test buckets (`test-bucket-1` and `test-bucket-2`) and uploads sample files for testing.
+
+## Debugging on MCP Inspector
+
+To debug the server using MCP Inspector:
+
+```bash
+# Run inspector with local Node.js
+sh run-inspector.sh
+
+# Run inspector with Docker Compose and MinIO
+sh run-inspector.sh --docker-compose
+
+# Run inspector with Docker CLI (without Docker Compose)
+sh run-inspector.sh --docker
+```
+
+When using the `--docker-compose` option, the script will:
+
+1. Start MinIO and the S3 MCP server containers if they aren't running
+2. Launch the MCP Inspector connected to the S3 MCP server
+3. You can then test the S3 tools against the local MinIO instance
 
 ## Connecting to Claude Desktop
 
@@ -127,6 +224,36 @@ To use this server with Claude Desktop:
   }
 }
 ```
+
+### Docker Option for Claude Desktop
+
+You can also configure Claude Desktop to use the Dockerized version of the MCP server:
+
+```json
+{
+  "mcpServers": {
+    "s3": {
+      "url": "http://localhost:3000"
+    }
+  }
+}
+```
+
+> **Important**: For the Docker option to work, you must start the Docker container separately before launching Claude Desktop using either Docker CLI or Docker Compose:
+>
+> **With Docker CLI:**
+>
+> ```bash
+> docker run -d -p 3000:3000 --env-file .env --name aws-s3-mcp-server aws-s3-mcp
+> ```
+>
+> **With Docker Compose:**
+>
+> ```bash
+> docker compose up -d s3-mcp
+> ```
+
+> **Note**: When using Docker, make sure the port mapping (3000:3000) matches the port specified in the Claude Desktop configuration.
 
 > **Important**: Please note the following when using the configuration above
 >

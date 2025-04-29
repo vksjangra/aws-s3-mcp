@@ -1,35 +1,115 @@
-version: "3.8"
-
 services:
   minio:
     image: minio/minio:RELEASE.2025-03-12T18-04-18Z
+    container_name: aws-s3-mcp-minio
     ports:
       - "9000:9000" # S3 API
       - "9001:9001" # Web UI
-    env_file: .env.local
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    command: server /data --console-address ":9001"
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
     volumes:
       - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   minio-mc:
     image: minio/mc:RELEASE.2025-03-12T17-29-24Z
+    container_name: aws-s3-mcp-minio-mc
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    restart: on-failure
+    entrypoint: |
+      /bin/sh -c '
+      echo "Waiting for MinIO to start..." && sleep 5
+
+      # Configure MinIO client
+      echo "Setting up MinIO client..."
+      /usr/bin/mc config host add myminio http://minio:9000 minioadmin minioadmin
+
+      # Verify the connection to MinIO with retry
+      echo "Verifying connection to MinIO..."
+      max_retries=5
+      retry_count=0
+      connected=false
+
+      while [ $$retry_count -lt $$max_retries ] && [ $$connected = false ]; do
+        if /usr/bin/mc admin info myminio; then
+          connected=true
+          echo "Successfully connected to MinIO"
+        else
+          retry_count=$$((retry_count+1))
+          echo "MinIO not ready yet, retrying... ($$retry_count/$$max_retries)"
+          sleep 5
+        fi
+      done
+
+      if [ $$connected = false ]; then
+        echo "Failed to connect to MinIO after multiple attempts"
+        exit 1
+      fi
+
+      # Create buckets
+      echo "Creating test buckets..."
+      /usr/bin/mc mb --ignore-existing myminio/test-bucket-1
+      /usr/bin/mc mb --ignore-existing myminio/test-bucket-2
+      echo "Created test buckets"
+
+      # Create and upload sample files
+      echo "Uploading sample files to test buckets..."
+      echo "This is a sample text file" > /tmp/sample.txt
+
+      # Upload files and verify the upload
+      echo "Uploading to test-bucket-1..."
+      /usr/bin/mc cp /tmp/sample.txt myminio/test-bucket-1/
+      /usr/bin/mc ls myminio/test-bucket-1/
+
+      # Create a JSON file and upload to bucket 2
+      echo "{\\"key\\": \\"value\\", \\"message\\": \\"This is a sample JSON file\\"}" > /tmp/sample.json
+      echo "Uploading to test-bucket-2..."
+      /usr/bin/mc cp /tmp/sample.json myminio/test-bucket-2/
+      /usr/bin/mc ls myminio/test-bucket-2/
+
+      echo "Sample files uploaded successfully."
+      echo "MinIO setup completed"
+      exit 0
+      '
+
+  s3-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aws-s3-mcp-server
+    environment:
+      - AWS_ENDPOINT=http://minio:9000
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin
+      - AWS_S3_FORCE_PATH_STYLE=true
+      - S3_BUCKETS=test-bucket-1,test-bucket-2
     depends_on:
       - minio
-    env_file: .env.local
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    entrypoint: >
-      /bin/sh -c "
-      echo 'Waiting for MinIO to start...' && sleep 3;
-      /usr/bin/mc config host add myminio http://minio:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD;
-      /usr/bin/mc mb myminio/test-bucket-1 --ignore-existing;
-      /usr/bin/mc mb myminio/test-bucket-2 --ignore-existing;
-      tail -f /dev/null;
-      "
+      - minio-mc
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "sh",
+          "-c",
+          "test -f /app/healthcheck.sh && sh /app/healthcheck.sh",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
 
 volumes:
   minio_data:
