@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-04-29
+
+### Added
+
+- Docker support with Dockerfile and docker-compose configuration
+- GitHub Actions workflow for Docker build, test, scan, and publish
+- Enhanced run-inspector.sh with Docker Compose and CLI support
+- Added Docker setup instructions for running the S3 MCP server
+
+### Changed
+
+- Updated README with badges and improved documentation
+- Improved GitHub workflow configurations
+
 ## [0.2.5] - 2025-04-10
 
 ### Changed
@@ -62,7 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unit tests for core functionality
 - CI: add test workflow
 
-[Unreleased]: https://github.com/samuraikun/aws-s3-mcp/compare/v0.2.5...HEAD
+[Unreleased]: https://github.com/samuraikun/aws-s3-mcp/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/samuraikun/aws-s3-mcp/compare/v0.2.5...v0.3.0
 [0.2.5]: https://github.com/samuraikun/aws-s3-mcp/compare/v0.2.4...v0.2.5
 [0.2.4]: https://github.com/samuraikun/aws-s3-mcp/compare/v0.2.3...v0.2.4
 [0.2.3]: https://github.com/samuraikun/aws-s3-mcp/compare/v0.2.2...v0.2.3
