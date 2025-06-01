@@ -16,7 +16,7 @@ export function createServer(dependencies: ServerDependencies = {}): McpServer {
   const {
     s3Resource = new S3Resource(),
     serverName = "s3-mcp-server",
-    serverVersion = "0.2.5",
+    serverVersion = "0.4.0",
   } = dependencies;
 
   const server = new McpServer({
