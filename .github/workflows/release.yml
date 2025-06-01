@@ -72,8 +72,6 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            dist/**/*
           body: |
             ## aws-s3-mcp v${{ env.VERSION }}
 
@@ -85,6 +83,11 @@ jobs:
             ### Installation
             ```
             npm install aws-s3-mcp
+            ```
+
+            ### Docker
+            ```
+            docker pull ghcr.io/${{ github.repository }}:v${{ env.VERSION }}
             ```
           draft: false
           prerelease: false
