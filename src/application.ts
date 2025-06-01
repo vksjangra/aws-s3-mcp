@@ -80,5 +80,5 @@ For more information, visit: https://github.com/samuraikun/aws-s3-mcp
 }
 
 export function showVersion(): void {
-  console.log("aws-s3-mcp v0.2.5");
+  console.log("aws-s3-mcp v0.4.0");
 }
