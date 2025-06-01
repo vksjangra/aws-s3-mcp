@@ -9,8 +9,17 @@ show_usage() {
   echo "Options:"
   echo "  -dc, --docker-compose  Run using Docker Compose with MinIO"
   echo "  -d, --docker           Run using Docker CLI (without Docker Compose)"
+  echo "  --http                 Use HTTP transport (default for local mode)"
+  echo "  --stdio                Use STDIO transport (default for Docker modes)"
   echo "  -f, --force-rebuild    Force Docker image rebuild"
   echo "  -h, --help             Show this help message"
+  echo ""
+  echo "Examples:"
+  echo "  $0                     Run locally with HTTP transport"
+  echo "  $0 --stdio             Run locally with STDIO transport"
+  echo "  $0 --docker            Run in Docker with STDIO transport"
+  echo "  $0 --docker --http     Run in Docker with HTTP transport"
+  echo "  $0 --docker-compose    Run with Docker Compose and MinIO"
   echo ""
 }
 
@@ -18,11 +27,14 @@ show_usage() {
 USE_DOCKER_COMPOSE=false
 USE_DOCKER_CLI=false
 FORCE_REBUILD=false
+TRANSPORT_TYPE=""  # Will be set based on context
 
 while [[ "$#" -gt 0 ]]; do
   case $1 in
     -dc|--docker-compose) USE_DOCKER_COMPOSE=true ;;
     -d|--docker) USE_DOCKER_CLI=true ;;
+    --http) TRANSPORT_TYPE="http" ;;
+    --stdio) TRANSPORT_TYPE="stdio" ;;
     -f|--force-rebuild) FORCE_REBUILD=true ;;
     -h|--help) show_usage; exit 0 ;;
     # For backward compatibility
@@ -48,12 +60,17 @@ while [[ "$#" -gt 0 ]]; do
   shift
 done
 
+# Set default transport types if not specified
+if [[ -z "$TRANSPORT_TYPE" ]]; then
+  if [[ "$USE_DOCKER_COMPOSE" == "true" || "$USE_DOCKER_CLI" == "true" ]]; then
+    TRANSPORT_TYPE="stdio"  # Default for Docker modes
+  else
+    TRANSPORT_TYPE="http"   # Default for local mode
+  fi
+fi
+
 # Check for appropriate env files
-if [ "$USE_DOCKER_COMPOSE" = true ] && [ ! -f .env.local ]; then
-  echo "ERROR: .env.local file not found for Docker Compose with MinIO setup."
-  echo "Please create one based on the example in the README."
-  exit 1
-elif [ "$USE_DOCKER_CLI" = true ] && [ ! -f .env ]; then
+if [ "$USE_DOCKER_CLI" = true ] && [ ! -f .env ]; then
   echo "ERROR: .env file not found. Please create one based on .env.example."
   echo "Make sure to fill in your AWS credentials."
   exit 1
@@ -127,13 +144,11 @@ if [ "$USE_DOCKER_COMPOSE" = true ]; then
     if [ "$NEEDS_REBUILD" = true ]; then
       echo "Building and starting Docker containers using Docker Compose (with rebuild)..."
       docker compose build
-      # 明示的に.env.localを指定してコンテナを起動
-      docker compose --env-file .env.local up -d
+      docker compose up -d
       save_build_hash
     else
       echo "Starting Docker containers using Docker Compose..."
-      # 明示的に.env.localを指定してコンテナを起動
-      docker compose --env-file .env.local up -d
+      docker compose up -d
     fi
 
     # Give some time for MinIO to initialize properly
@@ -143,7 +158,7 @@ if [ "$USE_DOCKER_COMPOSE" = true ]; then
     echo "Rebuilding and restarting Docker containers using Docker Compose..."
     docker compose down
     docker compose build
-    docker compose --env-file .env.local up -d
+    docker compose up -d
     save_build_hash
 
     # Give some time for MinIO to initialize properly
@@ -164,7 +179,7 @@ if [ "$USE_DOCKER_COMPOSE" = true ]; then
   echo "Containers remain running. To stop them use: docker compose down"
 
 elif [ "$USE_DOCKER_CLI" = true ]; then
-  echo "Running using Docker CLI (without Docker Compose)..."
+  echo "Running using Docker CLI with $TRANSPORT_TYPE transport..."
 
   # Check if Docker is installed
   if ! command -v docker &> /dev/null; then
@@ -183,58 +198,129 @@ elif [ "$USE_DOCKER_CLI" = true ]; then
     echo "Building Docker image..."
     docker build -t aws-s3-mcp .
     save_build_hash
+  fi
 
-    # Remove any existing container as we're rebuilding the image
-    EXISTING_CONTAINER=$(docker ps -aq -f name=aws-s3-mcp-server)
-    if [ -n "$EXISTING_CONTAINER" ]; then
-      echo "Removing existing container for rebuilt image..."
-      docker rm -f $EXISTING_CONTAINER >/dev/null 2>&1
+  if [ "$TRANSPORT_TYPE" = "http" ]; then
+    # HTTP Transport mode
+    CONTAINER_NAME="aws-s3-mcp-http-server"
+    
+    # Remove existing container if rebuilding
+    if [ "$REBUILD_NEEDED" = true ]; then
+      EXISTING_CONTAINER=$(docker ps -aq -f name=$CONTAINER_NAME)
+      if [ -n "$EXISTING_CONTAINER" ]; then
+        echo "Removing existing container for rebuilt image..."
+        docker rm -f $EXISTING_CONTAINER >/dev/null 2>&1
+      fi
     fi
 
-    # Start new container after rebuild
-    echo "Starting new Docker container with rebuilt image..."
-    ENV_VARS=$(cat .env | grep -v '^#' | xargs -I{} echo "-e {}")
-    docker run -d $ENV_VARS --name aws-s3-mcp-server aws-s3-mcp
-    CONTAINER_ID=$(docker ps -q -f name=aws-s3-mcp-server)
-  else
-    # Check if container is already running
-    EXISTING_CONTAINER=$(docker ps -q -f name=aws-s3-mcp-server)
+    # Check if HTTP container is already running
+    EXISTING_CONTAINER=$(docker ps -q -f name=$CONTAINER_NAME)
 
     if [ -z "$EXISTING_CONTAINER" ]; then
-      echo "Starting new Docker container..."
+      echo "Starting HTTP MCP server container..."
       # Load environment variables from .env file
       ENV_VARS=$(cat .env | grep -v '^#' | xargs -I{} echo "-e {}")
 
-      # Run the container in detached mode
-      docker run -d $ENV_VARS --name aws-s3-mcp-server aws-s3-mcp
-      CONTAINER_ID=$(docker ps -q -f name=aws-s3-mcp-server)
+      # Run the container with HTTP server, exposing port 3000
+      docker run -d $ENV_VARS -p 3000:3000 --name $CONTAINER_NAME aws-s3-mcp http
+      CONTAINER_ID=$(docker ps -q -f name=$CONTAINER_NAME)
+
+      # Wait a moment for the server to start
+      echo "Waiting for HTTP server to start..."
+      sleep 3
     else
-      echo "Using existing Docker container"
+      echo "HTTP server container already running"
       CONTAINER_ID=$EXISTING_CONTAINER
     fi
+
+    echo "Container ID: $CONTAINER_ID"
+    echo "HTTP MCP Server is running on http://localhost:3000"
+    echo "Health check: http://localhost:3000/health"
+    echo "MCP endpoint: http://localhost:3000/mcp"
+    echo "SSE endpoint: http://localhost:3000/sse"
+    echo ""
+    echo "Launching MCP Inspector to connect to HTTP server..."
+
+    # Launch MCP Inspector connected to the HTTP server
+    npx @modelcontextprotocol/inspector http://localhost:3000/mcp
+
+    echo "Container remains running. To stop it use: docker stop $CONTAINER_NAME && docker rm $CONTAINER_NAME"
+
+  else
+    # STDIO Transport mode (original behavior)
+    CONTAINER_NAME="aws-s3-mcp-server"
+    
+    # Remove existing container if rebuilding
+    if [ "$REBUILD_NEEDED" = true ]; then
+      EXISTING_CONTAINER=$(docker ps -aq -f name=$CONTAINER_NAME)
+      if [ -n "$EXISTING_CONTAINER" ]; then
+        echo "Removing existing container for rebuilt image..."
+        docker rm -f $EXISTING_CONTAINER >/dev/null 2>&1
+      fi
+
+      # Start new container after rebuild
+      echo "Starting new Docker container with rebuilt image..."
+      ENV_VARS=$(cat .env | grep -v '^#' | xargs -I{} echo "-e {}")
+      docker run -d $ENV_VARS --name $CONTAINER_NAME aws-s3-mcp
+      CONTAINER_ID=$(docker ps -q -f name=$CONTAINER_NAME)
+    else
+      # Check if container is already running
+      EXISTING_CONTAINER=$(docker ps -q -f name=$CONTAINER_NAME)
+
+      if [ -z "$EXISTING_CONTAINER" ]; then
+        echo "Starting new Docker container..."
+        # Load environment variables from .env file
+        ENV_VARS=$(cat .env | grep -v '^#' | xargs -I{} echo "-e {}")
+
+        # Run the container in detached mode
+        docker run -d $ENV_VARS --name $CONTAINER_NAME aws-s3-mcp
+        CONTAINER_ID=$(docker ps -q -f name=$CONTAINER_NAME)
+      else
+        echo "Using existing Docker container"
+        CONTAINER_ID=$EXISTING_CONTAINER
+      fi
+    fi
+
+    echo "Container ID: $CONTAINER_ID"
+    echo "Launching MCP Inspector with the Docker container (STDIO)..."
+    echo ""
+
+    # Run the MCP Inspector in the container
+    npx @modelcontextprotocol/inspector docker exec -i $CONTAINER_ID node ./dist/index.js
+
+    echo "Container remains running. To stop it use: docker stop $CONTAINER_NAME && docker rm $CONTAINER_NAME"
   fi
-
-  echo "Container ID: $CONTAINER_ID"
-  echo "Launching MCP Inspector with the Docker container..."
-  echo ""
-
-  # Run the MCP Inspector in the container
-  npx @modelcontextprotocol/inspector docker exec -i $CONTAINER_ID node ./dist/index.js
-
-  echo "Container remains running. To stop it use: docker stop aws-s3-mcp-server && docker rm aws-s3-mcp-server"
 else
+  # Local execution (no Docker)
   # Check if S3 MCP server is built
   if [ ! -d dist ]; then
     echo "Building S3 MCP server..."
     npm run build
   fi
 
-  # Launch the MCP Inspector
-  echo "Launching MCP Inspector with local S3 MCP server..."
-  echo "This will open in your browser. If it doesn't, check the terminal output for a URL to open."
-  echo ""
+  if [ "$TRANSPORT_TYPE" = "http" ]; then
+    # HTTP Transport mode
+    echo "Launching MCP Inspector with local S3 MCP server (HTTP transport)..."
+    echo "This will open in your browser. If it doesn't, check the terminal output for a URL to open."
+    echo ""
 
-  npx @modelcontextprotocol/inspector node ./dist/index.js
+    # Use the new modular architecture with HTTP transport
+    npx @modelcontextprotocol/inspector node ./dist/index.js --http
+    
+    echo ""
+    echo "MCP Inspector is running on http://localhost:3000"
+    echo "Health check: http://localhost:3000/health"
+    echo "MCP endpoint: http://localhost:3000/mcp" 
+    echo "SSE endpoint: http://localhost:3000/sse"
+  else
+    # STDIO Transport mode
+    echo "Launching MCP Inspector with local S3 MCP server (STDIO transport)..."
+    echo "This will open in your browser. If it doesn't, check the terminal output for a URL to open."
+    echo ""
+
+    # Use STDIO transport (original behavior)
+    npx @modelcontextprotocol/inspector node ./dist/index.js
+  fi
 fi
 
 # Exit gracefully
