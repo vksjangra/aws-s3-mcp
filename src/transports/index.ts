@@ -1,6 +1,6 @@
-import { StdioTransportFactory } from "./stdio.js";
 import { HttpTransportFactory } from "./http.js";
-import { TransportType, type ITransportFactory, type HttpTransportConfig } from "./types.js";
+import { StdioTransportFactory } from "./stdio.js";
+import { type HttpTransportConfig, type ITransportFactory, TransportType } from "./types.js";
 
 export function createTransportFactory(type: TransportType): ITransportFactory {
   switch (type) {

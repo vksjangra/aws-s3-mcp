@@ -2,9 +2,9 @@
 import dotenv from "dotenv";
 import { createServer } from "./server.js";
 import {
-  createTransportFactory,
-  TransportType,
   type HttpTransportConfig,
+  TransportType,
+  createTransportFactory,
 } from "./transports/index.js";
 
 export interface ApplicationConfig {

@@ -1,6 +1,6 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
-import { createServer } from "../../src/server.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createServer } from "../../src/server.js";
 
 // Mock the S3Resource
 vi.mock("../../src/resources/s3.js", () => ({

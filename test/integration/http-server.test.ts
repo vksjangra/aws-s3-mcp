@@ -1,7 +1,7 @@
-import { describe, expect, it, beforeAll, afterAll, vi } from "vitest";
-import { createMockBuckets } from "../mocks/s3Client.mock";
 import { spawn } from "node:child_process";
 import path from "node:path";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { createMockBuckets } from "../mocks/s3Client.mock";
 
 // Mock the S3Client for HTTP server tests
 vi.mock("@aws-sdk/client-s3", async () => {
