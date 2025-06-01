@@ -11,6 +11,27 @@ An Amazon S3 Model Context Protocol (MCP) server that provides tools for interac
 
 https://github.com/user-attachments/assets/d05ff0f1-e2bf-43b9-8d0c-82605abfb666
 
+## Features
+
+### 🚀 MCP Transport Support
+
+- ✅ **STDIO Transport** - Direct process communication for Claude Desktop
+- ✅ **HTTP Transport** - REST API with Server-Sent Events for web clients
+- ✅ **Streamable HTTP** - Real-time streaming for responsive interactions
+
+### 🛠️ Available Tools
+
+- ✅ **list-buckets** - List accessible S3 buckets with filtering
+- ✅ **list-objects** - Browse objects within buckets with prefix filtering
+- ✅ **get-object** - Retrieve object contents (text/binary support)
+
+### 🐳 Deployment Options
+
+- ✅ **Local Node.js** - Direct execution with npm/node
+- ✅ **Docker CLI** - Containerized deployment with custom configuration
+- ✅ **Docker Compose** - Full stack with MinIO for local testing
+- ✅ **MCP Inspector** - Built-in debugging and testing interface
+
 ## Overview
 
 This MCP server allows Large Language Models (LLMs) like Claude to interact with AWS S3 storage. It provides tools for:
@@ -84,22 +105,34 @@ The server can be configured using the following environment variables:
 
 ### Direct Node.js Execution
 
-You can run the server directly with Node.js:
+The server runs with **HTTP transport by default**, making it easy to test and debug:
 
 ```bash
-# Using npx (without installing)
+# Using npx (HTTP transport by default)
 npx aws-s3-mcp
 
-# If installed globally
+# If installed globally (HTTP transport)
 npm install -g aws-s3-mcp
 aws-s3-mcp
 
-# If running from cloned repository
+# If running from cloned repository (HTTP transport)
 npm start
 
-# Or directly
+# Or directly (HTTP transport)
 node dist/index.js
+
+# Explicit HTTP transport
+node dist/index.js --http
+
+# STDIO transport (for Claude Desktop integration)
+node dist/index.js --stdio
 ```
+
+When running with HTTP transport (default), the server will start on port 3000 and provide:
+
+- Health check endpoint: `http://localhost:3000/health`
+- MCP endpoint: `http://localhost:3000/mcp`
+- SSE endpoint: `http://localhost:3000/sse`
 
 ### Docker Setup 🐳
 
@@ -146,7 +179,7 @@ docker stop aws-s3-mcp-server
 docker rm aws-s3-mcp-server
 ```
 
-Note that the container doesn't expose any ports because it's designed to be used with Claude Desktop through Docker exec rather than direct HTTP connections.
+Note: For HTTP transport (default), add `-p 3000:3000` to expose the HTTP port. For STDIO transport (Claude Desktop), no port mapping is needed as it uses Docker exec for direct communication.
 
 #### Using Docker Compose
 
@@ -180,30 +213,186 @@ docker compose up -d
 
 The MinIO service automatically creates two test buckets (`test-bucket-1` and `test-bucket-2`) and uploads sample files for testing.
 
-## Debugging on MCP Inspector
+## Debugging with MCP Inspector 🔍
 
-To debug the server using MCP Inspector:
+The `run-inspector.sh` script provides an easy way to test and debug the S3 MCP server using the MCP Inspector. It supports multiple transport types and deployment modes.
+
+### Quick Start
 
 ```bash
-# Run inspector with local Node.js
-sh run-inspector.sh
+# Show all available options
+./run-inspector.sh --help
 
-# Run inspector with Docker Compose and MinIO
-sh run-inspector.sh --docker-compose
+# Run locally with HTTP transport (default)
+./run-inspector.sh
 
-# Run inspector with Docker CLI (without Docker Compose)
-sh run-inspector.sh --docker
+# Run with Docker Compose and MinIO for testing
+./run-inspector.sh --docker-compose
 ```
 
-When using the `--docker-compose` option, the script will:
+### Transport Types
 
-1. Start MinIO and the S3 MCP server containers if they aren't running
-2. Launch the MCP Inspector connected to the S3 MCP server
-3. You can then test the S3 tools against the local MinIO instance
+The server supports two transport protocols:
+
+#### HTTP Transport
+
+- **Best for**: Web-based debugging, external client connections
+- **Provides**: REST API endpoints, Server-Sent Events (SSE)
+- **Ports**: 3000 (HTTP), 3001+ (Inspector UI)
+
+#### STDIO Transport
+
+- **Best for**: Direct process communication, Claude Desktop integration
+- **Provides**: Standard input/output communication
+- **Ports**: None (direct process communication)
+
+### Usage Examples
+
+#### 1. Local Development (HTTP)
+
+```bash
+# Default: HTTP transport for local debugging
+./run-inspector.sh
+
+# Explicit HTTP transport
+./run-inspector.sh --http
+```
+
+This will:
+
+- Build the project if needed
+- Start the MCP server with HTTP transport on port 3000
+- Launch MCP Inspector in your browser
+- Provide endpoints:
+  - Health check: `http://localhost:3000/health`
+  - MCP endpoint: `http://localhost:3000/mcp`
+  - SSE endpoint: `http://localhost:3000/sse`
+
+#### 2. Local Development (STDIO)
+
+```bash
+# STDIO transport for local debugging
+./run-inspector.sh --stdio
+```
+
+This mode directly connects the MCP Inspector to the server process using standard input/output.
+
+#### 3. Docker with Real AWS (STDIO)
+
+```bash
+# Create .env file with your AWS credentials
+cp .env.example .env
+# Edit .env with your AWS credentials
+
+# Run with Docker using STDIO transport (default for Docker)
+./run-inspector.sh --docker
+```
+
+This will:
+
+- Build the Docker image if needed
+- Start a container with your AWS credentials
+- Connect MCP Inspector via Docker exec
+
+#### 4. Docker with Real AWS (HTTP)
+
+```bash
+# Run with Docker using HTTP transport
+./run-inspector.sh --docker --http
+```
+
+This will:
+
+- Start a containerized HTTP server on port 3000
+- Connect MCP Inspector to the HTTP endpoint
+- Useful for testing HTTP-based integrations
+
+#### 5. Docker Compose with MinIO (Testing)
+
+```bash
+# Run with MinIO for local testing (no AWS credentials needed)
+./run-inspector.sh --docker-compose
+```
+
+This will:
+
+- Start MinIO S3-compatible storage
+- Create test buckets: `test-bucket-1`, `test-bucket-2`
+- Upload sample files for testing
+- Start the S3 MCP server connected to MinIO
+- Launch MCP Inspector
+- Provide MinIO Web UI at `http://localhost:9001` (login: minioadmin/minioadmin)
+
+### Advanced Options
+
+#### Force Rebuild
+
+```bash
+# Force Docker image rebuild
+./run-inspector.sh --docker --force-rebuild
+./run-inspector.sh --docker-compose --force-rebuild
+```
+
+#### Debugging Tips
+
+1. **Check container logs**:
+
+   ```bash
+   # For Docker CLI mode
+   docker logs aws-s3-mcp-server
+
+   # For Docker Compose mode
+   docker compose logs s3-mcp
+   ```
+
+2. **Test endpoints manually**:
+
+   ```bash
+   # Health check
+   curl http://localhost:3000/health
+
+   # MinIO health (Docker Compose)
+   curl http://localhost:9000/minio/health/live
+   ```
+
+3. **Access MinIO Web UI** (Docker Compose only):
+   - URL: `http://localhost:9001`
+   - Username: `minioadmin`
+   - Password: `minioadmin`
+
+### Cleanup
+
+```bash
+# Stop and remove Docker containers
+docker stop aws-s3-mcp-server && docker rm aws-s3-mcp-server
+
+# Stop Docker Compose services
+docker compose down
+
+# Stop specific HTTP server container
+docker stop aws-s3-mcp-http-server && docker rm aws-s3-mcp-http-server
+```
+
+### Troubleshooting
+
+- **Port conflicts**: If port 3000 is in use, stop other services or change the port
+- **AWS credentials**: Ensure your `.env` file has valid AWS credentials for Docker modes
+- **Build errors**: Use `--force-rebuild` to rebuild Docker images
+- **Connection issues**: Check that containers are running with `docker ps`
+
+### Quick Reference
+
+| Command                               | Transport | Environment    | Description                              |
+| ------------------------------------- | --------- | -------------- | ---------------------------------------- |
+| `./run-inspector.sh`                  | HTTP      | Local          | Local development with HTTP transport    |
+| `./run-inspector.sh --stdio`          | STDIO     | Local          | Local development with STDIO transport   |
+| `./run-inspector.sh --docker`         | STDIO     | Docker + AWS   | Docker container with AWS credentials    |
+| `./run-inspector.sh --docker --http`  | HTTP      | Docker + AWS   | Docker container with HTTP transport     |
+| `./run-inspector.sh --docker-compose` | STDIO     | Docker + MinIO | Local testing with MinIO (no AWS needed) |
 
 ## Connecting to Claude Desktop
 
-To use this server with Claude Desktop:
+To use this server with Claude Desktop, you'll need to use **STDIO transport** (not the default HTTP transport) for direct process communication:
 
 1. Edit your Claude Desktop configuration file:
 
@@ -217,7 +406,7 @@ To use this server with Claude Desktop:
   "mcpServers": {
     "s3": {
       "command": "npx",
-      "args": ["aws-s3-mcp"],
+      "args": ["aws-s3-mcp", "--stdio"],
       "env": {
         "AWS_REGION": "us-east-1",
         "S3_BUCKETS": "bucket1,bucket2,bucket3",
@@ -288,7 +477,7 @@ which aws-s3-mcp
   "mcpServers": {
     "s3": {
       "command": "your-absolute-path-to-node",
-      "args": ["your-absolute-path-to-aws-s3-mcp/dist/index.js"],
+      "args": ["your-absolute-path-to-aws-s3-mcp/dist/index.js", "--stdio"],
       "env": {
         "AWS_REGION": "your-aws-region",
         "S3_BUCKETS": "your-s3-buckets",
