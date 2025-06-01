@@ -95,6 +95,8 @@ services:
       - AWS_SECRET_ACCESS_KEY=minioadmin
       - AWS_S3_FORCE_PATH_STYLE=true
       - S3_BUCKETS=test-bucket-1,test-bucket-2
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
     depends_on:
       - minio
       - minio-mc
