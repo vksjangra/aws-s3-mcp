@@ -34,9 +34,9 @@ describe("HTTP MCP Server", () => {
     process.env.PORT = TEST_PORT.toString();
     process.env.S3_BUCKETS = "test-bucket-1,test-bucket-2";
 
-    // Start the HTTP server
-    const serverPath = path.resolve(process.cwd(), "dist/http-server.js");
-    serverProcess = spawn("node", [serverPath], {
+    // Start the HTTP server using new architecture
+    const serverPath = path.resolve(process.cwd(), "dist/index.js");
+    serverProcess = spawn("node", [serverPath, "--http"], {
       env: {
         ...process.env,
         PORT: TEST_PORT.toString(),
@@ -126,13 +126,39 @@ describe("HTTP MCP Server", () => {
   });
 
   it("should handle tools/list request", async () => {
+    // First initialize the session
+    const initRequest = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: {
+        protocolVersion: "2025-03-26",
+        capabilities: {},
+        clientInfo: {
+          name: "test-client",
+          version: "1.0.0",
+        },
+      },
+    };
+
+    const sessionId = "test-session-2";
+    const initResponse = await fetch(`${baseUrl}/mcp?sessionId=${sessionId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(initRequest),
+    });
+    expect(initResponse.status).toBe(200);
+
+    // Now make the tools/list request
     const toolsListRequest = {
       jsonrpc: "2.0",
       id: 2,
       method: "tools/list",
     };
 
-    const response = await fetch(`${baseUrl}/mcp`, {
+    const response = await fetch(`${baseUrl}/mcp?sessionId=${sessionId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -159,6 +185,32 @@ describe("HTTP MCP Server", () => {
   });
 
   it("should handle list-buckets tool call", async () => {
+    // First initialize the session
+    const initRequest = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: {
+        protocolVersion: "2025-03-26",
+        capabilities: {},
+        clientInfo: {
+          name: "test-client",
+          version: "1.0.0",
+        },
+      },
+    };
+
+    const sessionId = "test-session-3";
+    const initResponse = await fetch(`${baseUrl}/mcp?sessionId=${sessionId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(initRequest),
+    });
+    expect(initResponse.status).toBe(200);
+
+    // Now make the tool call
     const toolCallRequest = {
       jsonrpc: "2.0",
       id: 3,
@@ -169,7 +221,7 @@ describe("HTTP MCP Server", () => {
       },
     };
 
-    const response = await fetch(`${baseUrl}/mcp`, {
+    const response = await fetch(`${baseUrl}/mcp?sessionId=${sessionId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -213,8 +265,8 @@ describe("HTTP MCP Server", () => {
       body: JSON.stringify(invalidRequest),
     });
 
-    // Should return error response but with 200 status (JSON-RPC convention)
-    expect(response.status).toBe(200);
+    // StreamableHTTPServerTransport returns 400 for parse errors
+    expect(response.status).toBe(400);
     const data = await response.json();
     expect(data).toHaveProperty("jsonrpc", "2.0");
     expect(data).toHaveProperty("error");

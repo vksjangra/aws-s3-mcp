@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 
 // Mock the S3Client for SSE endpoint tests
@@ -28,7 +29,7 @@ describe("SSE Endpoint Configuration", () => {
   it("should test MCP transport configuration options", () => {
     // Test the configuration options for StreamableHTTPServerTransport
     const config = {
-      sessionIdGenerator: () => crypto.randomUUID(),
+      sessionIdGenerator: () => randomUUID(),
       enableJsonResponse: false, // Use SSE mode
     };
 
@@ -55,7 +56,7 @@ describe("SSE Endpoint Configuration", () => {
   });
 
   it("should test session ID generation", () => {
-    const generateSessionId = () => crypto.randomUUID();
+    const generateSessionId = () => randomUUID();
     const sessionId1 = generateSessionId();
     const sessionId2 = generateSessionId();
 

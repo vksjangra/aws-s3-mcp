@@ -63,12 +63,9 @@ export class HttpTransport implements ITransport {
         const parsedBody = await c.req.json();
         const req = createMockNodeRequest(c, parsedBody);
 
-        // Fix Accept header for SSE clients
-        const acceptHeader = req.headers.accept || req.headers.Accept;
-        if (acceptHeader === "text/event-stream") {
-          req.headers.accept = "application/json, text/event-stream";
-          req.headers.Accept = "application/json, text/event-stream";
-        }
+        // Always set Accept header to support both JSON and SSE
+        req.headers.accept = "application/json, text/event-stream";
+        req.headers.Accept = "application/json, text/event-stream";
 
         // Handle session ID
         const sessionId = c.req.query("sessionId");
@@ -78,7 +75,7 @@ export class HttpTransport implements ITransport {
 
         const effectiveSessionId =
           sessionId || req.headers["mcp-session-id"] || req.headers["x-mcp-session-id"];
-        const session = this.getOrCreateSession(effectiveSessionId as string, server);
+        const session = await this.getOrCreateSession(effectiveSessionId as string, server);
         const { response: res, getResponse } = createMockNodeResponse();
 
         await session.transport.handleRequest(req, res, parsedBody);
@@ -127,7 +124,7 @@ export class HttpTransport implements ITransport {
     });
   }
 
-  private getOrCreateSession(sessionId?: string, server?: McpServer) {
+  private async getOrCreateSession(sessionId?: string, server?: McpServer) {
     const id = sessionId || crypto.randomUUID();
 
     const existing = this.activeSessions.get(id);
@@ -147,9 +144,12 @@ export class HttpTransport implements ITransport {
     const session = { transport, server };
     this.activeSessions.set(id, session);
 
-    server.connect(transport).catch(() => {
+    try {
+      await server.connect(transport);
+    } catch (error) {
       this.activeSessions.delete(id);
-    });
+      throw error;
+    }
 
     return session;
   }
