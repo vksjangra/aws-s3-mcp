@@ -55,7 +55,14 @@ jobs:
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
 
       - name: Update package.json Version
-        run: npm version ${{ env.VERSION }} --no-git-tag-version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          if [ "$CURRENT_VERSION" != "${{ env.VERSION }}" ]; then
+            echo "Updating version from $CURRENT_VERSION to ${{ env.VERSION }}"
+            npm version ${{ env.VERSION }} --no-git-tag-version
+          else
+            echo "Version ${{ env.VERSION }} already matches package.json, skipping update"
+          fi
 
       - name: Publish to NPM
         run: npm publish --provenance --access public
