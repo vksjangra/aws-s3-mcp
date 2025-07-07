@@ -9,7 +9,7 @@ export class ListBucketsTool implements IMCPTool {
   /**
    * Tool name
    */
-  readonly name = "list-buckets";
+  readonly name = "list-s3-buckets";
 
   /**
    * Tool description

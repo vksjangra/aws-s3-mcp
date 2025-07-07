@@ -10,7 +10,7 @@ export class GetObjectTool implements IMCPTool {
   /**
    * Tool name
    */
-  readonly name = "get-object";
+  readonly name = "get-s3-object";
 
   /**
    * Tool description

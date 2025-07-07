@@ -10,7 +10,7 @@ export class ListObjectsTool implements IMCPTool {
   /**
    * Tool name
    */
-  readonly name = "list-objects";
+  readonly name = "list-s3-objects";
 
   /**
    * Tool description
