@@ -179,9 +179,9 @@ describe("HTTP MCP Server", () => {
 
     // Check that expected S3 tools are present
     const toolNames = tools.map((tool: any) => tool.name);
-    expect(toolNames).toContain("list-buckets");
-    expect(toolNames).toContain("list-objects");
-    expect(toolNames).toContain("get-object");
+    expect(toolNames).toContain("list-s3-buckets");
+    expect(toolNames).toContain("list-s3-objects");
+    expect(toolNames).toContain("get-s3-object");
   });
 
   it("should handle list-buckets tool call", async () => {

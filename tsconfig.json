@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "CommonJS", // NOTE: pdf-parse does not support ESM
+    "module": "ESNext",
     "moduleResolution": "Node",
     "outDir": "./dist",
     "rootDir": "./src",

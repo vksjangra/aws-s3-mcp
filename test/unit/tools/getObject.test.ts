@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { S3Resource } from "../../../src/resources/s3";
-import { GetObjectTool } from "../../../src/tools/getObject";
-import type { S3ObjectData } from "../../../src/types";
+import { S3Resource } from "../../../src/resources/s3.js";
+import { GetObjectTool } from "../../../src/tools/getObject.js";
+import type { S3ObjectData } from "../../../src/types.js";
 
 // Mock the S3Resource
 vi.mock("../../../src/resources/s3", () => {
@@ -26,7 +26,7 @@ describe("GetObjectTool", () => {
   });
 
   it("should have the correct name and description", () => {
-    expect(getObjectTool.name).toBe("get-object");
+    expect(getObjectTool.name).toBe("get-s3-object");
     expect(getObjectTool.description).toBe("Retrieve an object from an S3 bucket");
     expect(getObjectTool.parameters).toHaveProperty("bucket");
     expect(getObjectTool.parameters).toHaveProperty("key");

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { S3Resource } from "../../../src/resources/s3";
-import { ListObjectsTool } from "../../../src/tools/listObjects";
+import { S3Resource } from "../../../src/resources/s3.js";
+import { ListObjectsTool } from "../../../src/tools/listObjects.js";
 import { createMockObjects } from "../../mocks/s3Client.mock";
 
 // Mock the S3Resource
@@ -26,7 +26,7 @@ describe("ListObjectsTool", () => {
   });
 
   it("should have the correct name and description", () => {
-    expect(listObjectsTool.name).toBe("list-objects");
+    expect(listObjectsTool.name).toBe("list-s3-objects");
     expect(listObjectsTool.description).toBe("List objects in an S3 bucket");
     expect(listObjectsTool.parameters).toHaveProperty("bucket");
     expect(listObjectsTool.parameters).toHaveProperty("prefix");

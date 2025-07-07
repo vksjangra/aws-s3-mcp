@@ -1,6 +1,6 @@
 import { Readable } from "node:stream";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { S3Resource } from "../../src/resources/s3";
+import { S3Resource } from "../../src/resources/s3.js";
 import { createMockBuckets, createMockObjects } from "../mocks/s3Client.mock";
 
 // Mock pdf-parse module

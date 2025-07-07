@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { S3Resource } from "../../../src/resources/s3";
-import { ListBucketsTool } from "../../../src/tools/listBuckets";
+import { S3Resource } from "../../../src/resources/s3.js";
+import { ListBucketsTool } from "../../../src/tools/listBuckets.js";
 import { createMockBuckets } from "../../mocks/s3Client.mock";
 
 // Mock the S3Resource
@@ -26,7 +26,7 @@ describe("ListBucketsTool", () => {
   });
 
   it("should have the correct name and description", () => {
-    expect(listBucketsTool.name).toBe("list-buckets");
+    expect(listBucketsTool.name).toBe("list-s3-buckets");
     expect(listBucketsTool.description).toBe("List available S3 buckets");
     expect(listBucketsTool.parameters).toEqual({});
   });

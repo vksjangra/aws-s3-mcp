@@ -2,6 +2,7 @@
   "name": "aws-s3-mcp",
   "version": "0.4.0",
   "description": "MCP Server for S3",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/samuraikun/aws-s3-mcp.git"

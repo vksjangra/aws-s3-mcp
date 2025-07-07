@@ -6,9 +6,8 @@ import {
   ListObjectsV2Command,
   S3Client,
 } from "@aws-sdk/client-s3";
-import pdfParse from "pdf-parse";
 import { P, match } from "ts-pattern";
-import type { S3ObjectData } from "../types";
+import type { S3ObjectData } from "../types.js";
 
 export class S3Resource {
   private client: S3Client;
@@ -234,6 +233,7 @@ export class S3Resource {
   // Convert PDF buffer to text
   async convertPdfToText(buffer: Buffer): Promise<string> {
     try {
+      const pdfParse = (await import("pdf-parse")).default;
       const data = await pdfParse(buffer);
       return data.text;
     } catch (error) {
