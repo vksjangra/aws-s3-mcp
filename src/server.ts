@@ -14,7 +14,7 @@ export interface ServerDependencies {
  */
 export function createServer(dependencies: ServerDependencies = {}): McpServer {
   const {
-    s3Resource = new S3Resource(),
+    s3Resource = new S3Resource(process.env.AWS_REGION || "us-east-1"),
     serverName = "s3-mcp-server",
     serverVersion = "0.4.0",
   } = dependencies;
